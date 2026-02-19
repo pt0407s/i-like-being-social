@@ -14,7 +14,6 @@ export function initDatabase() {
       username TEXT UNIQUE NOT NULL,
       display_name TEXT,
       bio TEXT,
-      email TEXT UNIQUE,
       password TEXT NOT NULL,
       avatar TEXT,
       status TEXT DEFAULT 'online',

@@ -8,7 +8,7 @@ router.use(authenticateToken)
 
 router.get('/me', (req, res) => {
   try {
-    const user = db.prepare('SELECT id, username, display_name, bio, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    const user = db.prepare('SELECT id, username, display_name, bio, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
     res.json(user)
   } catch (error) {
     console.error('Get user error:', error)
@@ -72,7 +72,7 @@ router.put('/me', (req, res) => {
       db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params)
     }
 
-    const user = db.prepare('SELECT id, username, display_name, bio, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    const user = db.prepare('SELECT id, username, display_name, bio, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
     res.json(user)
   } catch (error) {
     console.error('Update user error:', error)

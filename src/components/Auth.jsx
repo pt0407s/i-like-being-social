@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import { MessageCircle, Mail, Lock, User } from 'lucide-react'
+import { MessageCircle, Lock, User, Sparkles } from 'lucide-react'
 import api from '../lib/api'
 
 function Auth({ onAuth }) {
   const [isLogin, setIsLogin] = useState(true)
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
     password: ''
   })
   const [error, setError] = useState('')
@@ -22,7 +21,7 @@ function Auth({ onAuth }) {
       if (isLogin) {
         result = await api.login(formData.username, formData.password)
       } else {
-        result = await api.register(formData.username, formData.password, formData.email || undefined)
+        result = await api.register(formData.username, formData.password)
       }
       onAuth(result.user, result.token)
     } catch (err) {
@@ -33,72 +32,62 @@ function Auth({ onAuth }) {
   }
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gradient-to-br from-discord-blurple to-purple-600">
-      <div className="bg-discord-darker p-8 rounded-lg shadow-2xl w-96">
-        <div className="flex items-center justify-center mb-6">
-          <MessageCircle className="w-12 h-12 text-discord-blurple" />
+    <div className="min-h-screen bg-gradient-to-br from-dark-950 via-dark-900 to-dark-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-8 animate-slide-down">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-accent-500 rounded-2xl mb-4 shadow-glow">
+            <Sparkles className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+            {isLogin ? 'Welcome Back' : 'Create Account'}
+          </h1>
+          <p className="text-dark-400">
+            {isLogin ? 'Login to continue' : 'Sign up to get started'}
+          </p>
         </div>
-        <h1 className="text-3xl font-bold text-white text-center mb-2">
-          {isLogin ? 'Welcome Back!' : 'Create Account'}
-        </h1>
-        <p className="text-discord-lightgray text-center mb-6">
-          {isLogin ? 'Login to continue' : 'Sign up to get started'}
-        </p>
-        
+
         {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-200 px-4 py-2 rounded mb-4 text-sm">
+          <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-4 text-sm backdrop-blur-sm animate-slide-down">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-discord-lightgray text-sm font-semibold mb-2">
-              USERNAME
+          <div className="mb-5">
+            <label className="block text-dark-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+              Username
             </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
+            <div className="relative group">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-500 group-focus-within:text-primary-400 transition-colors" />
               <input
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                placeholder="Enter username"
+                className="w-full bg-dark-800/50 text-white pl-12 pr-4 py-3 rounded-xl border border-dark-700 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                placeholder="Enter your username"
                 required
               />
             </div>
           </div>
 
-          {!isLogin && (
-            <div className="mb-4">
-              <label className="block text-discord-lightgray text-sm font-semibold mb-2">
-                EMAIL (OPTIONAL)
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                  placeholder="Enter email (optional)"
-                />
-              </div>
-            </div>
-          )}
-
           <div className="mb-6">
-            <label className="block text-discord-lightgray text-sm font-semibold mb-2">
-              PASSWORD
+            <label className="block text-dark-400 text-sm font-semibold mb-2 uppercase tracking-wide">
+              Password
             </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-dark-500 group-focus-within:text-primary-400 transition-colors" />
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                placeholder="Enter password"
+                className="w-full bg-dark-800/50 text-white pl-12 pr-4 py-3 rounded-xl border border-dark-700 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+                placeholder="Enter your password"
                 required
               />
             </div>
@@ -107,18 +96,28 @@ function Auth({ onAuth }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-discord-blurple hover:bg-blue-600 text-white font-semibold py-3 rounded transition-colors disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-primary-500 to-accent-500 hover:from-primary-600 hover:to-accent-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-glow transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Sign Up')}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Loading...
+              </span>
+            ) : (
+              isLogin ? 'Sign In' : 'Create Account'
+            )}
           </button>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-discord-blurple hover:underline text-sm"
+            onClick={() => {
+              setIsLogin(!isLogin)
+              setError('')
+            }}
+            className="text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors"
           >
-            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Login'}
+            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
           </button>
         </div>
       </div>

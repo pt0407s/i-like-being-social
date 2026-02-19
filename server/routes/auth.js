@@ -7,31 +7,24 @@ const router = express.Router()
 
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body
+    const { username, password } = req.body
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password required' })
+      return res.status(400).json({ error: 'Username and password are required' })
     }
 
     const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
     if (existingUser) {
-      return res.status(400).json({ error: 'Username already taken' })
-    }
-
-    if (email) {
-      const existingEmail = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
-      if (existingEmail) {
-        return res.status(400).json({ error: 'Email already in use' })
-      }
+      return res.status(400).json({ error: 'Username already exists' })
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    const result = db.prepare('INSERT INTO users (username, email, password, display_name) VALUES (?, ?, ?, ?)').run(username, email || null, hashedPassword, username)
+    const result = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username, hashedPassword)
 
-    const user = db.prepare('SELECT id, username, display_name, email, avatar, status FROM users WHERE id = ?').get(result.lastInsertRowid)
-    const token = generateToken(user)
+    const user = db.prepare('SELECT id, username FROM users WHERE id = ?').get(result.lastInsertRowid)
+    const token = generateToken({ id: user.id, username: user.username })
 
-    res.json({ user, token })
+    res.json({ user: { id: user.id, username: user.username }, token })
   } catch (error) {
     console.error('Registration error:', error)
     res.status(500).json({ error: 'Registration failed' })
@@ -43,10 +36,6 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body
 
     let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
-    
-    if (!user && username.includes('@')) {
-      user = db.prepare('SELECT * FROM users WHERE email = ?').get(username)
-    }
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' })
@@ -57,10 +46,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
-    const { password: _, ...userWithoutPassword } = user
-    const token = generateToken(userWithoutPassword)
-
-    res.json({ user: userWithoutPassword, token })
+    const token = generateToken({ id: user.id, username: user.username })
+    res.json({ token, user: { id: user.id, username: user.username } })
   } catch (error) {
     console.error('Login error:', error)
     res.status(500).json({ error: 'Login failed' })

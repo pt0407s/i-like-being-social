@@ -9,7 +9,8 @@ function ServerList({ servers, currentView, onServerSelect, onHomeClick, onServe
 
   return (
     <>
-      <div className="w-18 bg-discord-dark flex flex-col items-center py-3 space-y-2 overflow-y-auto">
+      <div className="h-px bg-gradient-to-r from-transparent via-dark-700 to-transparent w-10 my-2" />
+      <div className="w-20 bg-gradient-to-b from-dark-950 to-dark-900 flex flex-col items-center py-3 gap-3 overflow-y-auto border-r border-dark-800/50">
         <button
           onClick={onHomeClick}
           className={`w-12 h-12 rounded-2xl hover:rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer ${
@@ -19,37 +20,36 @@ function ServerList({ servers, currentView, onServerSelect, onHomeClick, onServe
           <Home className="w-6 h-6 text-white" />
         </button>
         
-        <div className="w-8 h-0.5 bg-discord-darker rounded-full" />
-        
-        {servers.map((server) => (
+        {servers.map((server, index) => (
           <button
             key={server.id}
             onClick={() => onServerSelect(server)}
-            className={`w-12 h-12 rounded-2xl hover:rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer text-white font-bold ${
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold transition-all transform hover:scale-110 ${
               currentView.type === 'server' && currentView.server?.id === server.id
-                ? 'bg-discord-blurple'
-                : 'bg-discord-darker hover:bg-discord-blurple'
-            }`}
+                ? 'bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-glow scale-105'
+                : 'bg-dark-800/50 text-dark-300 hover:bg-gradient-to-br hover:from-primary-500/80 hover:to-accent-500/80 hover:text-white border border-dark-700'
+            } animate-scale-in`}
+            style={{ animationDelay: `${index * 50}ms` }}
             title={server.name}
           >
-            {server.icon || server.name.charAt(0).toUpperCase()}
+            {server.name.charAt(0).toUpperCase()}
           </button>
         ))}
         
         <button
           onClick={() => setShowCreateModal(true)}
-          className="w-12 h-12 bg-discord-darker hover:bg-discord-green rounded-2xl hover:rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer group"
+          className="w-14 h-14 rounded-2xl bg-dark-800/50 text-primary-400 hover:bg-gradient-to-br hover:from-primary-500 hover:to-accent-500 hover:text-white transition-all transform hover:scale-110 flex items-center justify-center border border-dark-700 hover:border-transparent shadow-lg hover:shadow-glow"
           title="Create Server"
         >
-          <Plus className="w-6 h-6 text-discord-green group-hover:text-white" />
+          <Plus className="w-7 h-7" />
         </button>
 
         <button
           onClick={() => setShowDiscoverModal(true)}
-          className="w-12 h-12 bg-discord-darker hover:bg-discord-green rounded-2xl hover:rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer group"
+          className="w-14 h-14 rounded-2xl bg-dark-800/50 text-accent-400 hover:bg-gradient-to-br hover:from-accent-500 hover:to-primary-500 hover:text-white transition-all transform hover:scale-110 flex items-center justify-center border border-dark-700 hover:border-transparent shadow-lg hover:shadow-glow-accent"
           title="Discover Servers"
         >
-          <Compass className="w-6 h-6 text-discord-green group-hover:text-white" />
+          <Compass className="w-7 h-7" />
         </button>
       </div>
 

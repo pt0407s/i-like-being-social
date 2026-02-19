@@ -410,37 +410,17 @@ function ChatView({ currentView, user }) {
             </div>
           )}
           
-          <div className="flex items-center gap-2 bg-discord-gray rounded-lg px-4 py-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="hidden"
-            />
+          <div className="flex items-center gap-2 bg-dark-800 rounded-xl px-4 py-3 border border-dark-700 focus-within:border-primary-500 transition-all">
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="text-discord-lightgray hover:text-white transition-colors"
-              title="Upload image"
-            >
-              <ImageIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => {
-                setShowGifPicker(!showGifPicker)
-                setShowEmojiPicker(false)
-              }}
-              className="text-discord-lightgray hover:text-white transition-colors"
+              onClick={() => setShowGifPicker(!showGifPicker)}
+              className="text-dark-400 hover:text-primary-400 transition-colors"
               title="Send GIF"
             >
               <Gift className="w-5 h-5" />
             </button>
             <button
-              onClick={() => {
-                setShowEmojiPicker(!showEmojiPicker)
-                setShowGifPicker(false)
-              }}
-              className="text-discord-lightgray hover:text-white transition-colors"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="text-dark-400 hover:text-primary-400 transition-colors"
             >
               <Smile className="w-5 h-5" />
             </button>
