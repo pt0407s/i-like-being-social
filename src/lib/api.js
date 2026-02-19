@@ -343,6 +343,46 @@ class API {
   async getTimeouts(serverId) {
     return this.request(`/timeouts/servers/${serverId}`)
   }
+
+  // Threads
+  async createThread(messageId) {
+    return this.request(`/threads/messages/${messageId}`, {
+      method: 'POST',
+    })
+  }
+
+  async getThread(threadId) {
+    return this.request(`/threads/${threadId}`)
+  }
+
+  async getThreadMessages(threadId, limit, before) {
+    const params = new URLSearchParams({ limit, before })
+    return this.request(`/threads/${threadId}/messages?${params}`)
+  }
+
+  async replyToThread(threadId, content, attachments) {
+    return this.request(`/threads/${threadId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ content, attachments }),
+    })
+  }
+
+  // Bookmarks
+  async bookmarkMessage(messageId) {
+    return this.request(`/bookmarks/messages/${messageId}`, {
+      method: 'POST',
+    })
+  }
+
+  async unbookmarkMessage(messageId) {
+    return this.request(`/bookmarks/messages/${messageId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getBookmarks() {
+    return this.request('/bookmarks')
+  }
 }
 
 export default new API()

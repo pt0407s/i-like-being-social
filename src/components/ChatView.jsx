@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Send, Smile, Image as ImageIcon, Trash2, Edit2, X, Gift, Pin, PinOff } from 'lucide-react'
+import { Hash, Send, Smile, Trash2, Edit2, X, Gift, Pin, MessageSquare, Bookmark, BookmarkCheck } from 'lucide-react'
 import api from '../lib/api'
 import socket from '../lib/socket'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import GifPicker from './GifPicker'
+import MessageRenderer from './MessageRenderer'
+import ThreadView from './ThreadView'
+import BookmarksView from './BookmarksView'
 
 function ChatView({ currentView, user }) {
   const [messages, setMessages] = useState([])
@@ -17,6 +20,9 @@ function ChatView({ currentView, user }) {
   const [imageFile, setImageFile] = useState(null)
   const [pinnedMessages, setPinnedMessages] = useState([])
   const [showPins, setShowPins] = useState(false)
+  const [activeThread, setActiveThread] = useState(null)
+  const [showBookmarks, setShowBookmarks] = useState(false)
+  const [bookmarkedIds, setBookmarkedIds] = useState(new Set())
   const messagesEndRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -221,6 +227,34 @@ function ChatView({ currentView, user }) {
     }
   }
 
+  const handleCreateThread = async (messageId) => {
+    try {
+      const thread = await api.createThread(messageId)
+      const message = messages.find(m => m.id === messageId)
+      setActiveThread({ thread, parentMessage: message })
+    } catch (error) {
+      console.error('Failed to create thread:', error)
+    }
+  }
+
+  const handleBookmark = async (messageId) => {
+    try {
+      if (bookmarkedIds.has(messageId)) {
+        await api.unbookmarkMessage(messageId)
+        setBookmarkedIds(prev => {
+          const next = new Set(prev)
+          next.delete(messageId)
+          return next
+        })
+      } else {
+        await api.bookmarkMessage(messageId)
+        setBookmarkedIds(prev => new Set(prev).add(messageId))
+      }
+    } catch (error) {
+      console.error('Failed to bookmark message:', error)
+    }
+  }
+
   const handleImageSelect = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
@@ -250,27 +284,36 @@ function ChatView({ currentView, user }) {
 
   return (
     <div className="flex-1 flex flex-col bg-discord-darkest">
-      <div className="h-12 px-4 flex items-center justify-between shadow-md border-b border-discord-darker">
+      <div className="h-12 px-4 flex items-center justify-between shadow-md border-b border-dark-800 bg-dark-900/50">
         <div className="flex items-center">
-          <Hash className="w-5 h-5 text-discord-lightgray mr-2" />
+          <Hash className="w-5 h-5 text-dark-400 mr-2" />
           <span className="text-white font-semibold">{channelName}</span>
         </div>
-        {currentView.channel && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => {
-              setShowPins(!showPins)
-              if (!showPins) loadPinnedMessages()
-            }}
-            className="text-discord-lightgray hover:text-white transition-colors flex items-center gap-2"
+            onClick={() => setShowBookmarks(true)}
+            className="text-dark-400 hover:text-white transition-colors flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-dark-800"
+            title="View bookmarks"
           >
-            <Pin className="w-5 h-5" />
-            {pinnedMessages.length > 0 && (
-              <span className="text-xs bg-discord-blurple rounded-full px-2 py-0.5">
-                {pinnedMessages.length}
-              </span>
-            )}
+            <Bookmark className="w-5 h-5" />
           </button>
-        )}
+          {currentView.channel && (
+            <button
+              onClick={() => {
+                setShowPins(!showPins)
+                if (!showPins) loadPinnedMessages()
+              }}
+              className="text-dark-400 hover:text-white transition-colors flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-dark-800"
+            >
+              <Pin className="w-5 h-5" />
+              {pinnedMessages.length > 0 && (
+                <span className="text-xs bg-primary-500 rounded-full px-2 py-0.5 text-white">
+                  {pinnedMessages.length}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -303,10 +346,10 @@ function ChatView({ currentView, user }) {
                     </span>
                   </div>
                 )}
-                <div className="text-discord-lightgray break-words">
-                  {message.content}
+                <div className="text-dark-200 break-words">
+                  <MessageRenderer content={message.content} isMarkdown={message.is_markdown} />
                   {message.edited_at && (
-                    <span className="text-xs text-discord-lightgray ml-1">(edited)</span>
+                    <span className="text-xs text-dark-400 ml-1">(edited)</span>
                   )}
                 </div>
                 {message.attachments && message.attachments.map((att, idx) => (
@@ -321,18 +364,34 @@ function ChatView({ currentView, user }) {
                   )
                 ))}
               </div>
-              <div className="opacity-0 group-hover:opacity-100 flex gap-2 ml-2">
+              <div className="opacity-0 group-hover:opacity-100 flex gap-1.5 ml-2">
                 <button
                   onClick={() => handleReaction(message.id, '👍')}
-                  className="text-discord-lightgray hover:text-white"
+                  className="text-dark-400 hover:text-white transition-colors p-1 hover:bg-dark-700 rounded"
                   title="React"
                 >
                   <Smile className="w-4 h-4" />
                 </button>
+                <button
+                  onClick={() => handleCreateThread(message.id)}
+                  className="text-dark-400 hover:text-primary-400 transition-colors p-1 hover:bg-dark-700 rounded"
+                  title="Start thread"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleBookmark(message.id)}
+                  className={`transition-colors p-1 hover:bg-dark-700 rounded ${
+                    bookmarkedIds.has(message.id) ? 'text-accent-400' : 'text-dark-400 hover:text-accent-400'
+                  }`}
+                  title={bookmarkedIds.has(message.id) ? 'Remove bookmark' : 'Bookmark'}
+                >
+                  {bookmarkedIds.has(message.id) ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                </button>
                 {currentView.channel && (
                   <button
                     onClick={() => handlePinMessage(message.id)}
-                    className="text-discord-lightgray hover:text-white"
+                    className="text-dark-400 hover:text-white transition-colors p-1 hover:bg-dark-700 rounded"
                     title="Pin message"
                   >
                     <Pin className="w-4 h-4" />
@@ -342,13 +401,13 @@ function ChatView({ currentView, user }) {
                   <>
                     <button
                       onClick={() => handleEditMessage(message)}
-                      className="text-discord-lightgray hover:text-white"
+                      className="text-dark-400 hover:text-white transition-colors p-1 hover:bg-dark-700 rounded"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(message.id)}
-                      className="text-discord-lightgray hover:text-red-500"
+                      className="text-dark-400 hover:text-red-400 transition-colors p-1 hover:bg-dark-700 rounded"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -443,6 +502,25 @@ function ChatView({ currentView, user }) {
         </div>
         </form>
       </div>
+
+      {activeThread && (
+        <ThreadView
+          thread={activeThread.thread}
+          parentMessage={activeThread.parentMessage}
+          onClose={() => setActiveThread(null)}
+          user={user}
+        />
+      )}
+
+      {showBookmarks && (
+        <BookmarksView
+          onClose={() => setShowBookmarks(false)}
+          onNavigate={(serverId, channelId) => {
+            // Navigation logic would go here
+            setShowBookmarks(false)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -15,6 +15,8 @@ import auditRoutes from './routes/audit.js'
 import reactionRoutes from './routes/reactions.js'
 import pinRoutes from './routes/pins.js'
 import timeoutRoutes from './routes/timeouts.js'
+import threadRoutes from './routes/threads.js'
+import bookmarkRoutes from './routes/bookmarks.js'
 import { initDatabase } from './database/init.js'
 import { setupSocketHandlers } from './socket/handlers.js'
 
@@ -59,6 +61,8 @@ app.use('/api/audit', auditRoutes)
 app.use('/api/reactions', reactionRoutes)
 app.use('/api/pins', pinRoutes)
 app.use('/api/timeouts', timeoutRoutes)
+app.use('/api/threads', threadRoutes)
+app.use('/api/bookmarks', bookmarkRoutes)
 
 setupSocketHandlers(io)
 

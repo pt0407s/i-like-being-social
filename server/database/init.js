@@ -71,17 +71,29 @@ export function initDatabase() {
       FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     );
 
+    CREATE TABLE IF NOT EXISTS message_threads (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      channel_id INTEGER NOT NULL,
+      message_id INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      content TEXT NOT NULL,
+      content TEXT,
       user_id INTEGER NOT NULL,
       channel_id INTEGER,
       dm_id INTEGER,
+      thread_id INTEGER,
       attachments TEXT,
+      is_markdown BOOLEAN DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       edited_at DATETIME,
-      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+      FOREIGN KEY (thread_id) REFERENCES message_threads(id) ON DELETE CASCADE,
       FOREIGN KEY (dm_id) REFERENCES direct_messages(id) ON DELETE CASCADE
     );
 
