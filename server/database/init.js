@@ -48,14 +48,28 @@ export function initDatabase() {
       UNIQUE(server_id, user_id)
     );
 
-    CREATE TABLE IF NOT EXISTS channels (
+    CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       server_id INTEGER NOT NULL,
       name TEXT NOT NULL,
-      type TEXT DEFAULT 'text',
       position INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS channels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id INTEGER NOT NULL,
+      category_id INTEGER,
+      name TEXT NOT NULL,
+      type TEXT DEFAULT 'text',
+      topic TEXT,
+      slowmode INTEGER DEFAULT 0,
+      nsfw BOOLEAN DEFAULT 0,
+      position INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
     );
 
     CREATE TABLE IF NOT EXISTS messages (
@@ -151,6 +165,83 @@ export function initDatabase() {
       permissions INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      action_type TEXT NOT NULL,
+      target_type TEXT,
+      target_id INTEGER,
+      details TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS webhooks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id INTEGER NOT NULL,
+      channel_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      avatar TEXT,
+      token TEXT NOT NULL,
+      created_by INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS timeouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      moderator_id INTEGER NOT NULL,
+      reason TEXT,
+      expires_at DATETIME NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (moderator_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS message_reactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      message_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      emoji TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(message_id, user_id, emoji)
+    );
+
+    CREATE TABLE IF NOT EXISTS pinned_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      channel_id INTEGER NOT NULL,
+      message_id INTEGER NOT NULL,
+      pinned_by INTEGER NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (channel_id) REFERENCES channels(id) ON DELETE CASCADE,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+      FOREIGN KEY (pinned_by) REFERENCES users(id),
+      UNIQUE(message_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS server_settings (
+      server_id INTEGER PRIMARY KEY,
+      description TEXT,
+      banner TEXT,
+      verification_level INTEGER DEFAULT 0,
+      explicit_filter INTEGER DEFAULT 0,
+      afk_channel_id INTEGER,
+      afk_timeout INTEGER DEFAULT 300,
+      system_channel_id INTEGER,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (afk_channel_id) REFERENCES channels(id) ON DELETE SET NULL,
+      FOREIGN KEY (system_channel_id) REFERENCES channels(id) ON DELETE SET NULL
     );
   `)
 

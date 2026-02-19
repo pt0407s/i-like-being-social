@@ -1,18 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Send, Smile, Image as ImageIcon, Trash2, Edit2, X } from 'lucide-react'
+import { Hash, Send, Smile, Image as ImageIcon, Trash2, Edit2, X, Gift, Pin, PinOff } from 'lucide-react'
 import api from '../lib/api'
 import socket from '../lib/socket'
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
+import GifPicker from './GifPicker'
 
 function ChatView({ currentView, user }) {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [typing, setTyping] = useState([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showGifPicker, setShowGifPicker] = useState(false)
   const [editingMessage, setEditingMessage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [imageFile, setImageFile] = useState(null)
+  const [pinnedMessages, setPinnedMessages] = useState([])
+  const [showPins, setShowPins] = useState(false)
   const messagesEndRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -171,6 +175,52 @@ function ChatView({ currentView, user }) {
     setShowEmojiPicker(false)
   }
 
+  const handleGifSelect = (gifUrl) => {
+    socket.sendMessage(
+      gifUrl,
+      currentView.channel?.id,
+      currentView.dm?.id,
+      [{ type: 'gif', url: gifUrl }]
+    )
+    setShowGifPicker(false)
+  }
+
+  const handleReaction = async (messageId, emoji) => {
+    try {
+      await api.addReaction(messageId, emoji)
+    } catch (error) {
+      console.error('Failed to add reaction:', error)
+    }
+  }
+
+  const handlePinMessage = async (messageId) => {
+    try {
+      await api.pinMessage(currentView.channel.id, messageId)
+      loadPinnedMessages()
+    } catch (error) {
+      console.error('Failed to pin message:', error)
+    }
+  }
+
+  const handleUnpinMessage = async (messageId) => {
+    try {
+      await api.unpinMessage(currentView.channel.id, messageId)
+      loadPinnedMessages()
+    } catch (error) {
+      console.error('Failed to unpin message:', error)
+    }
+  }
+
+  const loadPinnedMessages = async () => {
+    if (!currentView.channel) return
+    try {
+      const pins = await api.getPinnedMessages(currentView.channel.id)
+      setPinnedMessages(pins)
+    } catch (error) {
+      console.error('Failed to load pinned messages:', error)
+    }
+  }
+
   const handleImageSelect = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith('image/')) {
@@ -200,9 +250,27 @@ function ChatView({ currentView, user }) {
 
   return (
     <div className="flex-1 flex flex-col bg-discord-darkest">
-      <div className="h-12 px-4 flex items-center shadow-md border-b border-discord-darker">
-        <Hash className="w-6 h-6 text-discord-lightgray mr-2" />
-        <h3 className="text-white font-semibold">{channelName}</h3>
+      <div className="h-12 px-4 flex items-center justify-between shadow-md border-b border-discord-darker">
+        <div className="flex items-center">
+          <Hash className="w-5 h-5 text-discord-lightgray mr-2" />
+          <span className="text-white font-semibold">{channelName}</span>
+        </div>
+        {currentView.channel && (
+          <button
+            onClick={() => {
+              setShowPins(!showPins)
+              if (!showPins) loadPinnedMessages()
+            }}
+            className="text-discord-lightgray hover:text-white transition-colors flex items-center gap-2"
+          >
+            <Pin className="w-5 h-5" />
+            {pinnedMessages.length > 0 && (
+              <span className="text-xs bg-discord-blurple rounded-full px-2 py-0.5">
+                {pinnedMessages.length}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -253,22 +321,40 @@ function ChatView({ currentView, user }) {
                   )
                 ))}
               </div>
-              {isOwn && (
-                <div className="opacity-0 group-hover:opacity-100 flex gap-2 ml-2">
+              <div className="opacity-0 group-hover:opacity-100 flex gap-2 ml-2">
+                <button
+                  onClick={() => handleReaction(message.id, '👍')}
+                  className="text-discord-lightgray hover:text-white"
+                  title="React"
+                >
+                  <Smile className="w-4 h-4" />
+                </button>
+                {currentView.channel && (
                   <button
-                    onClick={() => handleEditMessage(message)}
+                    onClick={() => handlePinMessage(message.id)}
                     className="text-discord-lightgray hover:text-white"
+                    title="Pin message"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Pin className="w-4 h-4" />
                   </button>
-                  <button
-                    onClick={() => handleDeleteMessage(message.id)}
-                    className="text-discord-lightgray hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+                )}
+                {isOwn && (
+                  <>
+                    <button
+                      onClick={() => handleEditMessage(message)}
+                      className="text-discord-lightgray hover:text-white"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="text-discord-lightgray hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )
         })}
@@ -300,9 +386,16 @@ function ChatView({ currentView, user }) {
         <form onSubmit={handleSendMessage} className="relative">
           <div className="p-4 border-t border-discord-darkest">
           {showEmojiPicker && (
-            <div className="absolute bottom-20 right-4">
+            <div className="absolute bottom-20 right-4 z-50">
               <Picker data={data} onEmojiSelect={handleEmojiSelect} theme="dark" />
             </div>
+          )}
+
+          {showGifPicker && (
+            <GifPicker
+              onSelect={handleGifSelect}
+              onClose={() => setShowGifPicker(false)}
+            />
           )}
 
           {imagePreview && (
@@ -333,7 +426,20 @@ function ChatView({ currentView, user }) {
               <ImageIcon className="w-5 h-5" />
             </button>
             <button
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              onClick={() => {
+                setShowGifPicker(!showGifPicker)
+                setShowEmojiPicker(false)
+              }}
+              className="text-discord-lightgray hover:text-white transition-colors"
+              title="Send GIF"
+            >
+              <Gift className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                setShowEmojiPicker(!showEmojiPicker)
+                setShowGifPicker(false)
+              }}
               className="text-discord-lightgray hover:text-white transition-colors"
             >
               <Smile className="w-5 h-5" />

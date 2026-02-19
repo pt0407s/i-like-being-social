@@ -9,6 +9,12 @@ import messageRoutes from './routes/messages.js'
 import friendRoutes from './routes/friends.js'
 import userRoutes from './routes/users.js'
 import moderationRoutes from './routes/moderation.js'
+import categoryRoutes from './routes/categories.js'
+import webhookRoutes from './routes/webhooks.js'
+import auditRoutes from './routes/audit.js'
+import reactionRoutes from './routes/reactions.js'
+import pinRoutes from './routes/pins.js'
+import timeoutRoutes from './routes/timeouts.js'
 import { initDatabase } from './database/init.js'
 import { setupSocketHandlers } from './socket/handlers.js'
 
@@ -47,6 +53,12 @@ app.use('/api/messages', messageRoutes)
 app.use('/api/friends', friendRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/moderation', moderationRoutes)
+app.use('/api/categories', categoryRoutes)
+app.use('/api/webhooks', webhookRoutes)
+app.use('/api/audit', auditRoutes)
+app.use('/api/reactions', reactionRoutes)
+app.use('/api/pins', pinRoutes)
+app.use('/api/timeouts', timeoutRoutes)
 
 setupSocketHandlers(io)
 

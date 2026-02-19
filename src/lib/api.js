@@ -241,6 +241,108 @@ class API {
       body: JSON.stringify({ roleId }),
     })
   }
+
+  // Reactions
+  async addReaction(messageId, emoji) {
+    return this.request(`/reactions/messages/${messageId}`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
+    })
+  }
+
+  async removeReaction(messageId, emoji) {
+    return this.request(`/reactions/messages/${messageId}/${encodeURIComponent(emoji)}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getReactions(messageId) {
+    return this.request(`/reactions/messages/${messageId}`)
+  }
+
+  // Pins
+  async pinMessage(channelId, messageId) {
+    return this.request(`/pins/channels/${channelId}/messages/${messageId}`, {
+      method: 'POST',
+    })
+  }
+
+  async unpinMessage(channelId, messageId) {
+    return this.request(`/pins/channels/${channelId}/messages/${messageId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getPinnedMessages(channelId) {
+    return this.request(`/pins/channels/${channelId}`)
+  }
+
+  // Categories
+  async createCategory(serverId, name, position) {
+    return this.request(`/categories/servers/${serverId}`, {
+      method: 'POST',
+      body: JSON.stringify({ name, position }),
+    })
+  }
+
+  async getCategories(serverId) {
+    return this.request(`/categories/servers/${serverId}`)
+  }
+
+  async updateCategory(categoryId, data) {
+    return this.request(`/categories/${categoryId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCategory(categoryId) {
+    return this.request(`/categories/${categoryId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Webhooks
+  async createWebhook(serverId, channelId, name, avatar) {
+    return this.request(`/webhooks/servers/${serverId}/channels/${channelId}`, {
+      method: 'POST',
+      body: JSON.stringify({ name, avatar }),
+    })
+  }
+
+  async getWebhooks(serverId) {
+    return this.request(`/webhooks/servers/${serverId}`)
+  }
+
+  async deleteWebhook(webhookId) {
+    return this.request(`/webhooks/${webhookId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  // Audit Logs
+  async getAuditLogs(serverId, filters = {}) {
+    const params = new URLSearchParams(filters)
+    return this.request(`/audit/servers/${serverId}?${params}`)
+  }
+
+  // Timeouts
+  async timeoutMember(serverId, userId, duration, reason) {
+    return this.request(`/timeouts/servers/${serverId}/members/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ duration, reason }),
+    })
+  }
+
+  async removeTimeout(serverId, userId) {
+    return this.request(`/timeouts/servers/${serverId}/members/${userId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getTimeouts(serverId) {
+    return this.request(`/timeouts/servers/${serverId}`)
+  }
 }
 
 export default new API()
