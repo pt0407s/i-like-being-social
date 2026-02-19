@@ -8,6 +8,7 @@ import serverRoutes from './routes/servers.js'
 import messageRoutes from './routes/messages.js'
 import friendRoutes from './routes/friends.js'
 import userRoutes from './routes/users.js'
+import moderationRoutes from './routes/moderation.js'
 import { initDatabase } from './database/init.js'
 import { setupSocketHandlers } from './socket/handlers.js'
 
@@ -45,6 +46,7 @@ app.use('/api/servers', serverRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/friends', friendRoutes)
 app.use('/api/users', userRoutes)
+app.use('/api/moderation', moderationRoutes)
 
 setupSocketHandlers(io)
 

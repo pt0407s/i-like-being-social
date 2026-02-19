@@ -80,6 +80,7 @@ function MainApp({ user, onLogout }) {
             currentView={currentView}
             onViewChange={setCurrentView}
             user={user}
+            onLogout={onLogout}
           />
           <ChatView
             currentView={currentView}

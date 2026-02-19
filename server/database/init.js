@@ -12,12 +12,16 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
+      display_name TEXT,
+      email TEXT UNIQUE,
       password TEXT NOT NULL,
       avatar TEXT,
       status TEXT DEFAULT 'online',
       custom_status TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      is_bot BOOLEAN DEFAULT 0,
+      bot_owner_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (bot_owner_id) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS servers (
@@ -124,6 +128,28 @@ export function initDatabase() {
       dm_id INTEGER,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       PRIMARY KEY (user_id, channel_id, dm_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS server_bans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      server_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      banned_by INTEGER NOT NULL,
+      reason TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (banned_by) REFERENCES users(id),
+      UNIQUE(server_id, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS bots (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token_hash TEXT NOT NULL,
+      permissions INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
   `)
 

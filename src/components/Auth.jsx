@@ -20,9 +20,9 @@ function Auth({ onAuth }) {
     try {
       let result
       if (isLogin) {
-        result = await api.login(formData.email, formData.password)
+        result = await api.login(formData.username, formData.password)
       } else {
-        result = await api.register(formData.username, formData.email, formData.password)
+        result = await api.register(formData.username, formData.password, formData.email || undefined)
       }
       onAuth(result.user, result.token)
     } catch (err) {
@@ -52,41 +52,40 @@ function Auth({ onAuth }) {
         )}
 
         <form onSubmit={handleSubmit}>
-          {!isLogin && (
-            <div className="mb-4">
-              <label className="block text-discord-lightgray text-sm font-semibold mb-2">
-                USERNAME
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                  placeholder="Enter username"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
           <div className="mb-4">
             <label className="block text-discord-lightgray text-sm font-semibold mb-2">
-              EMAIL
+              USERNAME
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
               <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                placeholder="Enter email"
+                placeholder="Enter username"
                 required
               />
             </div>
           </div>
+
+          {!isLogin && (
+            <div className="mb-4">
+              <label className="block text-discord-lightgray text-sm font-semibold mb-2">
+                EMAIL (OPTIONAL)
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-discord-lightgray" />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full bg-discord-darkest text-white pl-10 pr-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
+                  placeholder="Enter email (optional)"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="mb-6">
             <label className="block text-discord-lightgray text-sm font-semibold mb-2">

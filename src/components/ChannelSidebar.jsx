@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Hash, ChevronDown, Settings, UserPlus, Plus } from 'lucide-react'
 import api from '../lib/api'
+import UserSettingsModal from './modals/UserSettingsModal'
+import ServerInviteModal from './modals/ServerInviteModal'
+import ServerSettingsModal from './modals/ServerSettingsModal'
 
-function ChannelSidebar({ server, currentView, onViewChange, user }) {
+function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
   const [channels, setChannels] = useState([])
   const [members, setMembers] = useState([])
   const [showMembers, setShowMembers] = useState(true)
+  const [showUserSettings, setShowUserSettings] = useState(false)
+  const [showServerInvite, setShowServerInvite] = useState(false)
+  const [showServerSettings, setShowServerSettings] = useState(false)
+  const [currentUser, setCurrentUser] = useState(user)
 
   useEffect(() => {
     loadChannels()
@@ -37,14 +44,37 @@ function ChannelSidebar({ server, currentView, onViewChange, user }) {
     onViewChange({ type: 'server', server, channel })
   }
 
+  const handleUserUpdate = (updatedUser) => {
+    setCurrentUser(updatedUser)
+  }
+
   return (
-    <div className="w-60 bg-discord-darker flex flex-col">
-      <div className="h-12 px-4 flex items-center justify-between shadow-md border-b border-discord-darkest">
-        <h2 className="text-white font-semibold flex items-center cursor-pointer hover:text-discord-lightgray transition-colors">
-          {server.name}
-          <ChevronDown className="w-4 h-4 ml-1" />
-        </h2>
-      </div>
+    <>
+      <div className="w-60 bg-discord-darker flex flex-col">
+        <div className="h-12 px-4 flex items-center justify-between shadow-md border-b border-discord-darkest">
+          <div className="flex-1 relative group">
+            <button className="text-white font-semibold flex items-center hover:text-discord-lightgray transition-colors w-full">
+              {server.name}
+              <ChevronDown className="w-4 h-4 ml-1" />
+            </button>
+            <div className="absolute top-full left-0 w-56 bg-discord-darkest rounded shadow-lg py-2 hidden group-hover:block z-10">
+              <button
+                onClick={() => setShowServerInvite(true)}
+                className="w-full text-left px-4 py-2 text-discord-blurple hover:bg-discord-gray transition-colors"
+              >
+                Invite People
+              </button>
+              {server.owner_id === user.id && (
+                <button
+                  onClick={() => setShowServerSettings(true)}
+                  className="w-full text-left px-4 py-2 text-white hover:bg-discord-gray transition-colors"
+                >
+                  Server Settings
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       
       <div className="flex-1 overflow-y-auto pt-4">
         <div className="px-2 mb-4">
@@ -99,8 +129,53 @@ function ChannelSidebar({ server, currentView, onViewChange, user }) {
             ))}
           </div>
         )}
+        </div>
+        
+        <div className="h-14 bg-discord-darkest px-2 flex items-center">
+          <div className="flex items-center flex-1 cursor-pointer hover:bg-discord-gray rounded p-1 transition-colors" onClick={() => setShowUserSettings(true)}>
+            <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm bg-discord-blurple"
+            >
+              {currentUser.username.charAt(0).toUpperCase()}
+            </div>
+            <div className="ml-2 flex-1 min-w-0">
+              <div className="text-white text-sm font-semibold truncate">
+                {currentUser.display_name || currentUser.username}
+              </div>
+              <div className="text-discord-lightgray text-xs truncate">
+                @{currentUser.username}
+              </div>
+            </div>
+            <Settings className="w-4 h-4 text-discord-lightgray" />
+          </div>
+        </div>
       </div>
-    </div>
+
+      {showUserSettings && (
+        <UserSettingsModal
+          user={currentUser}
+          onClose={() => setShowUserSettings(false)}
+          onUpdate={handleUserUpdate}
+          onLogout={onLogout}
+        />
+      )}
+
+      {showServerInvite && (
+        <ServerInviteModal
+          server={server}
+          onClose={() => setShowServerInvite(false)}
+        />
+      )}
+
+      {showServerSettings && (
+        <ServerSettingsModal
+          server={server}
+          user={user}
+          onClose={() => setShowServerSettings(false)}
+          onUpdate={() => {}}
+        />
+      )}
+    </>
   )
 }
 

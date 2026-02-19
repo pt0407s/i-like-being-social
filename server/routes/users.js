@@ -18,7 +18,7 @@ router.get('/me', (req, res) => {
 
 router.put('/me', (req, res) => {
   try {
-    const { username, status, custom_status } = req.body
+    const { username, display_name, status, custom_status } = req.body
     
     if (username) {
       const existing = db.prepare('SELECT * FROM users WHERE username = ? AND id != ?').get(username, req.user.id)
@@ -34,6 +34,10 @@ router.put('/me', (req, res) => {
       updates.push('username = ?')
       params.push(username)
     }
+    if (display_name !== undefined) {
+      updates.push('display_name = ?')
+      params.push(display_name)
+    }
     if (status) {
       updates.push('status = ?')
       params.push(status)
@@ -48,7 +52,7 @@ router.put('/me', (req, res) => {
       db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params)
     }
 
-    const user = db.prepare('SELECT id, username, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    const user = db.prepare('SELECT id, username, display_name, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
     res.json(user)
   } catch (error) {
     console.error('Update user error:', error)

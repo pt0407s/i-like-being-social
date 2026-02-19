@@ -9,19 +9,26 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'All fields required' })
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' })
     }
 
-    const existingUser = db.prepare('SELECT * FROM users WHERE email = ? OR username = ?').get(email, username)
+    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' })
+      return res.status(400).json({ error: 'Username already taken' })
+    }
+
+    if (email) {
+      const existingEmail = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
+      if (existingEmail) {
+        return res.status(400).json({ error: 'Email already in use' })
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
-    const result = db.prepare('INSERT INTO users (username, email, password) VALUES (?, ?, ?)').run(username, email, hashedPassword)
+    const result = db.prepare('INSERT INTO users (username, email, password, display_name) VALUES (?, ?, ?, ?)').run(username, email || null, hashedPassword, username)
 
-    const user = db.prepare('SELECT id, username, email, avatar, status FROM users WHERE id = ?').get(result.lastInsertRowid)
+    const user = db.prepare('SELECT id, username, display_name, email, avatar, status FROM users WHERE id = ?').get(result.lastInsertRowid)
     const token = generateToken(user)
 
     res.json({ user, token })
@@ -33,9 +40,14 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { username, password } = req.body
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email)
+    let user = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
+    
+    if (!user && username.includes('@')) {
+      user = db.prepare('SELECT * FROM users WHERE email = ?').get(username)
+    }
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' })
     }

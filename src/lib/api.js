@@ -37,19 +37,19 @@ class API {
     return response.json()
   }
 
-  async register(username, email, password) {
+  async register(username, password, email) {
     const data = await this.request('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, password, email }),
     })
     this.setToken(data.token)
     return data
   }
 
-  async login(email, password) {
+  async login(username, password) {
     const data = await this.request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     })
     this.setToken(data.token)
     return data
@@ -205,6 +205,36 @@ class API {
   async deleteFolder(folderId) {
     return this.request(`/users/folders/${folderId}`, {
       method: 'DELETE',
+    })
+  }
+
+  async kickMember(serverId, userId) {
+    return this.request(`/moderation/servers/${serverId}/kick/${userId}`, {
+      method: 'POST',
+    })
+  }
+
+  async banMember(serverId, userId, reason) {
+    return this.request(`/moderation/servers/${serverId}/ban/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    })
+  }
+
+  async unbanMember(serverId, userId) {
+    return this.request(`/moderation/servers/${serverId}/ban/${userId}`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getBans(serverId) {
+    return this.request(`/moderation/servers/${serverId}/bans`)
+  }
+
+  async assignRole(serverId, userId, roleId) {
+    return this.request(`/moderation/servers/${serverId}/members/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ roleId }),
     })
   }
 }
