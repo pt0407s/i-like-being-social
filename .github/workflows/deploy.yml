@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy Frontend to GitHub Pages
 
 on:
   push:
@@ -30,8 +30,10 @@ jobs:
       - name: Install dependencies
         run: npm install
       
-      - name: Build
+      - name: Build frontend
         run: npm run build
+        env:
+          VITE_API_URL: https://i-like-being-social.onrender.com/api
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

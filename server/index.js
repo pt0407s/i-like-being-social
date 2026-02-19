@@ -15,14 +15,26 @@ dotenv.config()
 
 const app = express()
 const httpServer = createServer(app)
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://pt0407s.github.io',
+  process.env.CLIENT_URL
+].filter(Boolean)
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 })
 
-app.use(cors())
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}))
 app.use(express.json())
 app.use('/uploads', express.static('uploads'))
 
