@@ -95,10 +95,10 @@ class API {
     return this.request(`/servers/${serverId}/roles`)
   }
 
-  async createRole(serverId, name, color, permissions) {
+  async createRole(serverId, name, color, permissions, position) {
     return this.request(`/servers/${serverId}/roles`, {
       method: 'POST',
-      body: JSON.stringify({ name, color, permissions }),
+      body: JSON.stringify({ name, color, permissions, position }),
     })
   }
 
@@ -179,6 +179,10 @@ class API {
       method: 'PUT',
       body: JSON.stringify(data),
     })
+  }
+
+  async getUser(userId) {
+    return this.request(`/users/${userId}`)
   }
 
   async searchUsers(query) {

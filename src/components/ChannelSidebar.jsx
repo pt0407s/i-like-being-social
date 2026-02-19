@@ -4,6 +4,7 @@ import api from '../lib/api'
 import UserSettingsModal from './modals/UserSettingsModal'
 import ServerInviteModal from './modals/ServerInviteModal'
 import ServerSettingsModal from './modals/ServerSettingsModal'
+import UserProfileModal from './modals/UserProfileModal'
 
 function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
   const [channels, setChannels] = useState([])
@@ -12,6 +13,8 @@ function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
   const [showUserSettings, setShowUserSettings] = useState(false)
   const [showServerInvite, setShowServerInvite] = useState(false)
   const [showServerSettings, setShowServerSettings] = useState(false)
+  const [showUserProfile, setShowUserProfile] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
   const [currentUser, setCurrentUser] = useState(user)
 
   useEffect(() => {
@@ -46,6 +49,17 @@ function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
 
   const handleUserUpdate = (updatedUser) => {
     setCurrentUser(updatedUser)
+  }
+
+  const handleMemberClick = async (member) => {
+    try {
+      const userData = await api.getUser(member.id)
+      const userRoles = roles.filter(r => r.id === member.role_id)
+      setSelectedUser({ ...userData, roles: userRoles })
+      setShowUserProfile(true)
+    } catch (error) {
+      console.error('Failed to load user:', error)
+    }
   }
 
   return (
@@ -108,21 +122,24 @@ function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
               Members — {members.length}
             </div>
             {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center px-2 py-1.5 rounded hover:bg-discord-gray cursor-pointer group"
+              <div 
+                key={member.id} 
+                className="flex items-center px-2 py-1 rounded hover:bg-discord-gray cursor-pointer group"
+                onClick={() => handleMemberClick(member)}
               >
                 <div className="relative">
-                  <div className="w-8 h-8 rounded-full bg-discord-blurple flex items-center justify-center text-white text-sm font-semibold">
+                  <div className="w-8 h-8 rounded-full bg-discord-blurple flex items-center justify-center text-white font-semibold text-sm">
                     {member.username.charAt(0).toUpperCase()}
                   </div>
                   <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-discord-darker ${
-                    member.status === 'online' ? 'bg-discord-green' : 'bg-discord-gray'
+                    member.status === 'online' ? 'bg-green-500' :
+                    member.status === 'idle' ? 'bg-yellow-500' :
+                    member.status === 'dnd' ? 'bg-red-500' : 'bg-gray-500'
                   }`} />
                 </div>
                 <div className="ml-2 flex-1 min-w-0">
                   <div className="text-sm font-medium truncate" style={{ color: member.role_color || '#b9bbbe' }}>
-                    {member.username}
+                    {member.display_name || member.username}
                   </div>
                 </div>
               </div>
@@ -173,6 +190,17 @@ function ChannelSidebar({ server, currentView, onViewChange, user, onLogout }) {
           user={user}
           onClose={() => setShowServerSettings(false)}
           onUpdate={() => {}}
+        />
+      )}
+
+      {showUserProfile && selectedUser && (
+        <UserProfileModal
+          user={selectedUser}
+          roles={selectedUser.roles}
+          onClose={() => {
+            setShowUserProfile(false)
+            setSelectedUser(null)
+          }}
         />
       )}
     </>

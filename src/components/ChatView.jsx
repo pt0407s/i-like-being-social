@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Send, Smile, Image as ImageIcon, Trash2, Edit2 } from 'lucide-react'
+import { Hash, Send, Smile, Image as ImageIcon, Trash2, Edit2, X } from 'lucide-react'
 import api from '../lib/api'
 import socket from '../lib/socket'
 import data from '@emoji-mart/data'
@@ -11,8 +11,11 @@ function ChatView({ currentView, user }) {
   const [typing, setTyping] = useState([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [editingMessage, setEditingMessage] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [imageFile, setImageFile] = useState(null)
   const messagesEndRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     if (currentView.channel) {
@@ -104,22 +107,39 @@ function ChatView({ currentView, user }) {
     }
   }
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault()
-    if (!newMessage.trim() && !editingMessage) return
+    if (!newMessage.trim() && !imageFile && !editingMessage) return
 
     if (editingMessage) {
       socket.editMessage(editingMessage.id, newMessage)
       setEditingMessage(null)
     } else {
-      socket.sendMessage(
-        newMessage.trim(),
-        currentView.channel?.id,
-        currentView.dm?.id
-      )
+      if (imageFile) {
+        const reader = new FileReader()
+        const base64Promise = new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(imageFile)
+        })
+        const base64 = await base64Promise
+        socket.sendMessage(
+          newMessage.trim(),
+          currentView.channel?.id,
+          currentView.dm?.id,
+          [{ type: 'image', data: base64, name: imageFile.name }]
+        )
+      } else {
+        socket.sendMessage(
+          newMessage.trim(),
+          currentView.channel?.id,
+          currentView.dm?.id
+        )
+      }
     }
 
     setNewMessage('')
+    setImageFile(null)
+    setImagePreview(null)
     socket.stopTyping(currentView.channel?.id, currentView.dm?.id)
   }
 
@@ -149,6 +169,26 @@ function ChatView({ currentView, user }) {
   const handleEmojiSelect = (emoji) => {
     setNewMessage(prev => prev + emoji.native)
     setShowEmojiPicker(false)
+  }
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0]
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeImage = () => {
+    setImageFile(null)
+    setImagePreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const formatTime = (timestamp) => {
@@ -201,6 +241,17 @@ function ChatView({ currentView, user }) {
                     <span className="text-xs text-discord-lightgray ml-1">(edited)</span>
                   )}
                 </div>
+                {message.attachments && message.attachments.map((att, idx) => (
+                  att.type === 'image' && (
+                    <img
+                      key={idx}
+                      src={att.data}
+                      alt={att.name}
+                      className="mt-2 max-w-md rounded cursor-pointer hover:opacity-90"
+                      onClick={() => window.open(att.data, '_blank')}
+                    />
+                  )
+                ))}
               </div>
               {isOwn && (
                 <div className="opacity-0 group-hover:opacity-100 flex gap-2 ml-2">
@@ -247,36 +298,64 @@ function ChatView({ currentView, user }) {
           </div>
         )}
         <form onSubmit={handleSendMessage} className="relative">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={handleInputChange}
-            placeholder={`Message ${channelName}`}
-            className="w-full bg-discord-gray text-white px-4 py-3 rounded-lg focus:outline-none pr-24"
-            maxLength={2000}
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+          <div className="p-4 border-t border-discord-darkest">
+          {showEmojiPicker && (
+            <div className="absolute bottom-20 right-4">
+              <Picker data={data} onEmojiSelect={handleEmojiSelect} theme="dark" />
+            </div>
+          )}
+
+          {imagePreview && (
+            <div className="mb-2 relative inline-block">
+              <img src={imagePreview} alt="Preview" className="max-w-xs rounded" />
+              <button
+                onClick={removeImage}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2 bg-discord-gray rounded-lg px-4 py-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
             <button
-              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="text-discord-lightgray hover:text-white transition-colors"
+              title="Upload image"
+            >
+              <ImageIcon className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="text-discord-lightgray hover:text-white transition-colors"
             >
               <Smile className="w-5 h-5" />
             </button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={handleInputChange}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSendMessage()}
+              placeholder={`Message ${currentView.channel ? '#' + currentView.channel.name : currentView.dm?.username || ''}`}
+              className="flex-1 bg-transparent text-white outline-none"
+            />
             <button
-              type="submit"
-              className="text-discord-lightgray hover:text-white transition-colors"
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() && !imageFile}
+              className="text-discord-blurple hover:text-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send className="w-5 h-5" />
             </button>
           </div>
+        </div>
         </form>
-        
-        {showEmojiPicker && (
-          <div className="absolute bottom-20 right-8">
-            <Picker data={data} onEmojiSelect={handleEmojiSelect} theme="dark" />
-          </div>
-        )}
       </div>
     </div>
   )

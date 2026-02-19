@@ -13,6 +13,7 @@ export function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       display_name TEXT,
+      bio TEXT,
       email TEXT UNIQUE,
       password TEXT NOT NULL,
       avatar TEXT,
@@ -97,7 +98,7 @@ export function initDatabase() {
       server_id INTEGER NOT NULL,
       name TEXT NOT NULL,
       color TEXT,
-      permissions INTEGER DEFAULT 0,
+      permissions TEXT DEFAULT 'cosmetic',
       position INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (server_id) REFERENCES servers(id) ON DELETE CASCADE

@@ -40,11 +40,15 @@ export function setupSocketHandlers(io) {
         ).run(content, socket.user.id, channelId || null, dmId || null, attachments ? JSON.stringify(attachments) : null)
 
         const message = db.prepare(`
-          SELECT m.*, u.username, u.avatar, u.status
+          SELECT m.*, u.username, u.display_name, u.avatar, u.status
           FROM messages m
           JOIN users u ON m.user_id = u.id
           WHERE m.id = ?
         `).get(result.lastInsertRowid)
+
+        if (message.attachments) {
+          message.attachments = JSON.parse(message.attachments)
+        }
 
         if (channelId) {
           io.to(`channel:${channelId}`).emit('message:new', message)
@@ -105,11 +109,15 @@ export function setupSocketHandlers(io) {
         db.prepare('UPDATE messages SET content = ?, edited_at = CURRENT_TIMESTAMP WHERE id = ?').run(content, messageId)
 
         const updated = db.prepare(`
-          SELECT m.*, u.username, u.avatar, u.status
+          SELECT m.*, u.username, u.display_name, u.avatar, u.status
           FROM messages m
           JOIN users u ON m.user_id = u.id
           WHERE m.id = ?
         `).get(messageId)
+
+        if (updated.attachments) {
+          updated.attachments = JSON.parse(updated.attachments)
+        }
 
         if (message.channel_id) {
           io.to(`channel:${message.channel_id}`).emit('message:edited', updated)

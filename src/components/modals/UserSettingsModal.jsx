@@ -4,8 +4,8 @@ import api from '../../lib/api'
 
 function UserSettingsModal({ user, onClose, onUpdate, onLogout }) {
   const [formData, setFormData] = useState({
-    username: user.username,
     displayName: user.display_name || user.username,
+    bio: user.bio || '',
     customStatus: user.custom_status || ''
   })
   const [loading, setLoading] = useState(false)
@@ -18,8 +18,8 @@ function UserSettingsModal({ user, onClose, onUpdate, onLogout }) {
 
     try {
       const updated = await api.updateMe({
-        username: formData.username !== user.username ? formData.username : undefined,
         display_name: formData.displayName,
+        bio: formData.bio,
         custom_status: formData.customStatus
       })
       onUpdate(updated)
@@ -68,17 +68,11 @@ function UserSettingsModal({ user, onClose, onUpdate, onLogout }) {
                 <label className="block text-discord-lightgray text-sm font-semibold mb-2">
                   USERNAME
                 </label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full bg-discord-darkest text-white px-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
-                  placeholder="Enter username"
-                  required
-                  maxLength={32}
-                />
+                <div className="w-full bg-discord-darkest text-discord-lightgray px-4 py-3 rounded">
+                  @{user.username}
+                </div>
                 <p className="text-discord-lightgray text-xs mt-1">
-                  This is your unique identifier. Others use this to find you.
+                  Username cannot be changed.
                 </p>
               </div>
 
@@ -97,6 +91,20 @@ function UserSettingsModal({ user, onClose, onUpdate, onLogout }) {
                 <p className="text-discord-lightgray text-xs mt-1">
                   This is how others see your name. Can be anything!
                 </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-discord-lightgray text-sm font-semibold mb-2">
+                  BIO
+                </label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  className="w-full bg-discord-darkest text-white px-4 py-3 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple resize-none"
+                  placeholder="Tell us about yourself..."
+                  maxLength={190}
+                  rows={3}
+                />
               </div>
 
               <div className="mb-4">

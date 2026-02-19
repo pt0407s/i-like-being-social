@@ -76,15 +76,20 @@ function ServerSettingsModal({ server, onClose, onUpdate, user }) {
     }
   }
 
-  const handleCreateRole = async () => {
-    const name = prompt('Role name:')
-    if (!name) return
+  const [showCreateRole, setShowCreateRole] = useState(false)
+  const [newRole, setNewRole] = useState({ name: '', color: '#99AAB5', permissions: 'cosmetic' })
 
-    const color = prompt('Role color (hex):') || '#99AAB5'
+  const handleCreateRole = async () => {
+    if (!newRole.name) {
+      alert('Please enter a role name')
+      return
+    }
 
     try {
-      await api.createRole(server.id, name, color, 0)
+      await api.createRole(server.id, newRole.name, newRole.color, newRole.permissions, 0)
       await loadRoles()
+      setShowCreateRole(false)
+      setNewRole({ name: '', color: '#99AAB5', permissions: 'cosmetic' })
     } catch (error) {
       alert(error.message)
     }
@@ -190,15 +195,92 @@ function ServerSettingsModal({ server, onClose, onUpdate, user }) {
 
             {activeTab === 'roles' && (
               <div>
-                {isOwner && (
+                {isOwner && !showCreateRole && (
                   <button
-                    onClick={handleCreateRole}
+                    onClick={() => setShowCreateRole(true)}
                     className="mb-4 bg-discord-blurple hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" />
                     Create Role
                   </button>
                 )}
+
+                {showCreateRole && (
+                  <div className="mb-4 bg-discord-darkest p-4 rounded">
+                    <h3 className="text-white font-semibold mb-3">Create New Role</h3>
+                    <div className="mb-3">
+                      <label className="block text-discord-lightgray text-sm font-semibold mb-2">
+                        ROLE NAME
+                      </label>
+                      <input
+                        type="text"
+                        value={newRole.name}
+                        onChange={(e) => setNewRole({ ...newRole, name: e.target.value })}
+                        className="w-full bg-discord-darker text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
+                        placeholder="Enter role name"
+                        maxLength={32}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-discord-lightgray text-sm font-semibold mb-2">
+                        ROLE COLOR
+                      </label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="color"
+                          value={newRole.color}
+                          onChange={(e) => setNewRole({ ...newRole, color: e.target.value })}
+                          className="w-16 h-10 rounded cursor-pointer bg-discord-darker border-2 border-discord-gray"
+                        />
+                        <input
+                          type="text"
+                          value={newRole.color}
+                          onChange={(e) => setNewRole({ ...newRole, color: e.target.value })}
+                          className="flex-1 bg-discord-darker text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple font-mono"
+                          placeholder="#99AAB5"
+                          maxLength={7}
+                        />
+                      </div>
+                    </div>
+                    <div className="mb-3">
+                      <label className="block text-discord-lightgray text-sm font-semibold mb-2">
+                        PERMISSIONS
+                      </label>
+                      <select
+                        value={newRole.permissions}
+                        onChange={(e) => setNewRole({ ...newRole, permissions: e.target.value })}
+                        className="w-full bg-discord-darker text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-discord-blurple"
+                      >
+                        <option value="cosmetic">Cosmetic - No special permissions</option>
+                        <option value="mod">Moderator - Can timeout users and delete messages</option>
+                        <option value="owner">Owner - Full access to server</option>
+                      </select>
+                      <p className="text-discord-lightgray text-xs mt-1">
+                        {newRole.permissions === 'cosmetic' && 'This role is purely cosmetic with no special permissions.'}
+                        {newRole.permissions === 'mod' && 'Can moderate messages and timeout users.'}
+                        {newRole.permissions === 'owner' && 'Has full control over the server (use with caution).'}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowCreateRole(false)
+                          setNewRole({ name: '', color: '#99AAB5', permissions: 'cosmetic' })
+                        }}
+                        className="flex-1 bg-discord-gray hover:bg-discord-lightgray text-white py-2 rounded transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleCreateRole}
+                        className="flex-1 bg-discord-blurple hover:bg-blue-600 text-white py-2 rounded transition-colors"
+                      >
+                        Create
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   {roles.map((role) => (
                     <div key={role.id} className="bg-discord-darkest p-4 rounded flex items-center justify-between">
@@ -207,7 +289,14 @@ function ServerSettingsModal({ server, onClose, onUpdate, user }) {
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: role.color || '#99AAB5' }}
                         />
-                        <span className="text-white font-medium">{role.name}</span>
+                        <div>
+                          <span className="text-white font-medium">{role.name}</span>
+                          <div className="text-discord-lightgray text-xs">
+                            {role.permissions === 'owner' && '👑 Owner'}
+                            {role.permissions === 'mod' && '🛡️ Moderator'}
+                            {role.permissions === 'cosmetic' && '✨ Cosmetic'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}

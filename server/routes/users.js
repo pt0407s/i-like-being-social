@@ -8,7 +8,23 @@ router.use(authenticateToken)
 
 router.get('/me', (req, res) => {
   try {
-    const user = db.prepare('SELECT id, username, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    const user = db.prepare('SELECT id, username, display_name, bio, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    res.json(user)
+  } catch (error) {
+    console.error('Get user error:', error)
+    res.status(500).json({ error: 'Failed to fetch user' })
+  }
+})
+
+router.get('/:userId', (req, res) => {
+  try {
+    const { userId } = req.params
+    const user = db.prepare('SELECT id, username, display_name, bio, avatar, status, custom_status, created_at FROM users WHERE id = ?').get(userId)
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
     res.json(user)
   } catch (error) {
     console.error('Get user error:', error)
@@ -18,7 +34,7 @@ router.get('/me', (req, res) => {
 
 router.put('/me', (req, res) => {
   try {
-    const { username, display_name, status, custom_status } = req.body
+    const { username, display_name, bio, status, custom_status } = req.body
     
     if (username) {
       const existing = db.prepare('SELECT * FROM users WHERE username = ? AND id != ?').get(username, req.user.id)
@@ -38,6 +54,10 @@ router.put('/me', (req, res) => {
       updates.push('display_name = ?')
       params.push(display_name)
     }
+    if (bio !== undefined) {
+      updates.push('bio = ?')
+      params.push(bio)
+    }
     if (status) {
       updates.push('status = ?')
       params.push(status)
@@ -52,7 +72,7 @@ router.put('/me', (req, res) => {
       db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params)
     }
 
-    const user = db.prepare('SELECT id, username, display_name, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
+    const user = db.prepare('SELECT id, username, display_name, bio, email, avatar, status, custom_status FROM users WHERE id = ?').get(req.user.id)
     res.json(user)
   } catch (error) {
     console.error('Update user error:', error)

@@ -163,19 +163,25 @@ router.get('/:serverId/roles', (req, res) => {
 
 router.post('/:serverId/roles', (req, res) => {
   try {
-    const { name, color, permissions } = req.body
     const { serverId } = req.params
+    const { name, color, permissions, position } = req.body
 
     const server = db.prepare('SELECT * FROM servers WHERE id = ?').get(serverId)
+    if (!server) {
+      return res.status(404).json({ error: 'Server not found' })
+    }
+
     if (server.owner_id !== req.user.id) {
       return res.status(403).json({ error: 'Only server owner can create roles' })
     }
 
-    const maxPosition = db.prepare('SELECT MAX(position) as max FROM roles WHERE server_id = ?').get(serverId)
-    const position = (maxPosition.max || 0) + 1
-
-    const result = db.prepare('INSERT INTO roles (server_id, name, color, permissions, position) VALUES (?, ?, ?, ?, ?)')
-      .run(serverId, name, color, permissions || 0, position)
+    const result = db.prepare('INSERT INTO roles (server_id, name, color, permissions, position) VALUES (?, ?, ?, ?, ?)').run(
+      serverId,
+      name,
+      color || '#99AAB5',
+      permissions || 'cosmetic',
+      position || 0
+    )
 
     const role = db.prepare('SELECT * FROM roles WHERE id = ?').get(result.lastInsertRowid)
     res.json(role)
