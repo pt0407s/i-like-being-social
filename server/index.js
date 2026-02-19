@@ -1,0 +1,43 @@
+import express from 'express'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import authRoutes from './routes/auth.js'
+import serverRoutes from './routes/servers.js'
+import messageRoutes from './routes/messages.js'
+import friendRoutes from './routes/friends.js'
+import userRoutes from './routes/users.js'
+import { initDatabase } from './database/init.js'
+import { setupSocketHandlers } from './socket/handlers.js'
+
+dotenv.config()
+
+const app = express()
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+})
+
+app.use(cors())
+app.use(express.json())
+app.use('/uploads', express.static('uploads'))
+
+initDatabase()
+
+app.use('/api/auth', authRoutes)
+app.use('/api/servers', serverRoutes)
+app.use('/api/messages', messageRoutes)
+app.use('/api/friends', friendRoutes)
+app.use('/api/users', userRoutes)
+
+setupSocketHandlers(io)
+
+const PORT = process.env.PORT || 3001
+
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`)
+})
