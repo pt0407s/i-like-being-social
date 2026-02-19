@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Send, Smile, Trash2, Edit2, X, Gift, Pin, MessageSquare, Bookmark, BookmarkCheck } from 'lucide-react'
+import { Hash, Send, Smile, Trash2, Edit2, X, Gift, Pin, MessageSquare, Bookmark } from 'lucide-react'
 import api from '../lib/api'
 import socket from '../lib/socket'
 import data from '@emoji-mart/data'
@@ -386,7 +386,7 @@ function ChatView({ currentView, user }) {
                   }`}
                   title={bookmarkedIds.has(message.id) ? 'Remove bookmark' : 'Bookmark'}
                 >
-                  {bookmarkedIds.has(message.id) ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                  <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(message.id) ? 'fill-current' : ''}`} />
                 </button>
                 {currentView.channel && (
                   <button

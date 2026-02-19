@@ -17,6 +17,8 @@ import pinRoutes from './routes/pins.js'
 import timeoutRoutes from './routes/timeouts.js'
 import threadRoutes from './routes/threads.js'
 import bookmarkRoutes from './routes/bookmarks.js'
+import searchRoutes from './routes/search.js'
+import pollRoutes from './routes/polls.js'
 import { initDatabase } from './database/init.js'
 import { setupSocketHandlers } from './socket/handlers.js'
 
@@ -63,6 +65,8 @@ app.use('/api/pins', pinRoutes)
 app.use('/api/timeouts', timeoutRoutes)
 app.use('/api/threads', threadRoutes)
 app.use('/api/bookmarks', bookmarkRoutes)
+app.use('/api/search', searchRoutes)
+app.use('/api/polls', pollRoutes)
 
 setupSocketHandlers(io)
 

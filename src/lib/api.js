@@ -383,6 +383,45 @@ class API {
   async getBookmarks() {
     return this.request('/bookmarks')
   }
+
+  // Search
+  async searchMessages(query, filters = {}) {
+    const params = new URLSearchParams({ q: query, ...filters })
+    return this.request(`/search/messages?${params}`)
+  }
+
+  async searchUsers(query, limit = 20) {
+    const params = new URLSearchParams({ q: query, limit })
+    return this.request(`/search/users?${params}`)
+  }
+
+  async searchServers(query, limit = 20) {
+    const params = new URLSearchParams({ q: query, limit })
+    return this.request(`/search/servers?${params}`)
+  }
+
+  // Polls
+  async createPoll(channelId, question, options, duration, multipleChoice) {
+    return this.request(`/polls/channels/${channelId}`, {
+      method: 'POST',
+      body: JSON.stringify({ question, options, duration, multipleChoice }),
+    })
+  }
+
+  async votePoll(pollId, optionIndex) {
+    return this.request(`/polls/${pollId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ optionIndex }),
+    })
+  }
+
+  async getPoll(pollId) {
+    return this.request(`/polls/${pollId}`)
+  }
+
+  async getChannelPolls(channelId, limit = 20) {
+    return this.request(`/polls/channels/${channelId}/list?limit=${limit}`)
+  }
 }
 
 export default new API()
